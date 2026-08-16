@@ -82,15 +82,6 @@ class MediaStateStore extends EventTarget {
 }
 
 class YoutubeSpeedControllerElement {
-    controllerHTML = `
-        <yt-button-view-model class="ytd-menu-renderer">
-            <button-view-model class="ytSpecButtonViewModelHost style-scope ytd-menu-renderer">
-                <button id="mc-speed-controller" class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m yt-spec-button-shape-next--icon-leading yt-spec-button-shape-next--enable-backdrop-filter-experiment" title="" aria-label="Speed" aria-disabled="false" style="">
-                    <div class="yt-spec-button-shape-next__button-text-content"></div>
-                </button>
-            </button-view-model>
-        </yt-button-view-model>
-    `;
 
     constructor(mediaStateStore, clickCallback, dblClickCallback, wheelCallback) {
         this._mediaStateStore = mediaStateStore;
@@ -107,11 +98,10 @@ class YoutubeSpeedControllerElement {
             return null;
         }
 
-        targetElement.insertAdjacentHTML('beforeend', this.controllerHTML);
-        const controller = document.getElementById('mc-speed-controller');
-        if (!controller) {
-            return null;
-        }
+        const controller = this._createControllerElement(
+            this._formatSpeedText(this._mediaStateStore.state.speed)
+        );
+        targetElement.insertAdjacentElement('beforeend', controller);
 
         controller.addEventListener('click', () => {
             this._clickCallback();
@@ -124,9 +114,7 @@ class YoutubeSpeedControllerElement {
             this._wheelCallback(event.deltaY);
         })
 
-        this._drawCurrentMediaSpeed(this._mediaStateStore.state.speed);
         this._mediaStateStore.addEventListener('onMediaSpeedChange', this._onMediaSpeedChangeListener);
-
         return controller;
     }
 
@@ -149,8 +137,35 @@ class YoutubeSpeedControllerElement {
 
     _drawCurrentMediaSpeed(speed) {
         const controller = document.getElementById('mc-speed-controller');
-        const speedText = controller.querySelector('.yt-spec-button-shape-next__button-text-content');
+        const speedText = controller.querySelector('.ytSpecButtonShapeNextButtonTextContent');
         speedText.textContent = this._formatSpeedText(speed);
+    }
+
+    _createControllerElement(speedText) {
+        const originalButton = document.querySelector('ytd-menu-renderer yt-button-view-model');
+        if (!originalButton) {
+            return null;
+        }
+
+        const controller = originalButton.cloneNode(true);
+        controller.id = 'mc-speed-controller';
+
+        const buttonElement = controller.querySelector('button');
+        if (buttonElement) {
+            buttonElement.setAttribute('aria-label', "Speed Controller");
+            buttonElement.removeAttribute('title');
+            buttonElement.classList.remove('ytSpecButtonShapeNextIconLeading');
+        }
+        const iconWrapper = controller.querySelector('.ytSpecButtonShapeNextIcon');
+        if (iconWrapper) {
+            iconWrapper.remove();
+        }
+        const textElement = controller.querySelector('.ytSpecButtonShapeNextButtonTextContent');
+        if (textElement) {
+            textElement.textContent = speedText;
+        }
+
+        return controller;
     }
 }
 
