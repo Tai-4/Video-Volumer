@@ -341,7 +341,12 @@ class AdapterFactory {
         });
     }
     const speedControllerDblClickCallback = () => {
-        mediaStateStore.updateSpeed(MediaState.maxSpeedLimit);
+        if (mediaStateStore.state.speed == MediaState.maxSpeedLimit) {
+            mediaStateStore.updateSpeed(MediaState.minSpeedLimit);
+        } else {
+            mediaStateStore.updateSpeed(MediaState.maxSpeedLimit);
+        }
+        
         const mediaElements = getAllMediaElements();
         mediaElements.forEach((mediaElement) => {
             mediaElement.playbackRate = mediaStateStore.state.speed;
